@@ -41,7 +41,9 @@ class ConvD(BaseModel):
         self.V = nn.Parameter(torch.randn(self.v_size)).to(self.device)
 
         self.a = kwargs.get('a')
+        self.mp_weight = kwargs.get('b', 0.1)  # 改名mp_weight
         self.P = torch.zeros(config.get('entity_cnt'), config.get('relation_cnt')).to(self.device)
+        self.MP = torch.zeros(self.entity_cnt, self.relation_cnt).to(self.device)
         self.attention(config.get('data'))
 
         self.input_drop = torch.nn.Dropout(kwargs.get('input_dropout')).to(self.device)
@@ -64,12 +66,62 @@ class ConvD(BaseModel):
         torch.nn.init.xavier_normal_(self.R.weight.data)
 
     def attention(self, data):
+        max_size = self.config.get('model_hyper_params').get('memory_size', 10000)  # 背包大小
+        M = []  # 空池子
+        freq = {}  # o频率
         for d in tqdm(range(len(data))):
-            self.P[data[d][0]][data[d][2]] = self.P[data[d][0]][data[d][2]] + 1
+            h = data[d][0]
+            t = data[d][1]  # o = t
+            r = data[d][2]
+            has_hr = any(m[0] == h and m[1] == r for m in M)
+            if has_hr:
+                has_o = any(m[2] == t for m in M)
+                if has_o:
+                    # 更新
+                    if (h, r, t) not in M:
+                        M.append((h, r, t))
+                        freq[t] = freq.get(t, 0) + 1
+                else:
+                    if len(M) >= max_size:
+                        if freq:
+                            min_o = min(freq, key=freq.get)
+                            for i, m in enumerate(M):
+                                if m[2] == min_o:
+                                    del M[i]
+                                    freq[min_o] -= 1
+                                    if freq[min_o] == 0:
+                                        del freq[min_o]
+                                    break
+                    M.append((h, r, t))
+                    freq[t] = freq.get(t, 0) + 1
+            else:
+                # 否则记忆
+                if len(M) >= max_size:
+                    if freq:
+                        min_o = min(freq, key=freq.get)
+                        for i, m in enumerate(M):
+                            if m[2] == min_o:
+                                del M[i]
+                                freq[min_o] -= 1
+                                if freq[min_o] == 0:
+                                    del freq[min_o]
+                                break
+                M.append((h, r, t))
+                freq[t] = freq.get(t, 0) + 1
+        # 填P和MP 无重合
+        for d in tqdm(range(len(data))):
+            h = data[d][0]
+            t = data[d][1]  # o = t
+            r = data[d][2]
+            if (h, r, t) in M:
+                self.MP[h][r] += 1
+            else:
+                self.P[h][r] += 1
+        # log两个
         for i in tqdm(range(self.P.size(0))):
             for j in range(self.P.size(1)):
                 self.P[i][j] = torch.log(self.P[i][j] + 1)
-
+                self.MP[i][j] = torch.log(self.MP[i][j] + 1)
     def forward(self, batch_h, batch_r, batch_t=None, inverse=False):
         batch_size = batch_h.size(0)
 
@@ -80,8 +132,9 @@ class ConvD(BaseModel):
         K = torch.mm(R, self.K)
         V = torch.mm(R, self.V)
 
-        res = torch.mm(Q, K.T) / sqrt(self.q_size[1]) + self.a * torch.tensor\
-                                (self.P[batch_h][:, batch_r])
+        res = (torch.mm(Q, K.T) / sqrt(self.q_size[1]) +
+               self.a * torch.tensor(self.P[batch_h][:, batch_r])
+               + self.mp_weight * torch.tensor(self.MP[batch_h][:, batch_r]))
         res = torch.softmax(res, dim=1)
         atten = torch.mm(res, V)
 
