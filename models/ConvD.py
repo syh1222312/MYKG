@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 from math import sqrt
-import numpy as np
 from tqdm import tqdm
 from .BaseModel import BaseModel
 
@@ -67,17 +66,17 @@ class ConvD(BaseModel):
 
     def attention(self, data):
         max_size = self.config.get('model_hyper_params').get('memory_size', 10000)  # 背包大小
-        M = []  # 空池子
-        freq = {}  # o频率
+        M = []
+        freq = {}
         for d in tqdm(range(len(data))):
             h = data[d][0]
-            t = data[d][1]  # o = t
+            t = data[d][1]
             r = data[d][2]
             has_hr = any(m[0] == h and m[1] == r for m in M)
             if has_hr:
                 has_o = any(m[2] == t for m in M)
                 if has_o:
-                    # 更新
+
                     if (h, r, t) not in M:
                         M.append((h, r, t))
                         freq[t] = freq.get(t, 0) + 1
@@ -95,7 +94,7 @@ class ConvD(BaseModel):
                     M.append((h, r, t))
                     freq[t] = freq.get(t, 0) + 1
             else:
-                # 否则记忆
+
                 if len(M) >= max_size:
                     if freq:
                         min_o = min(freq, key=freq.get)
@@ -108,16 +107,16 @@ class ConvD(BaseModel):
                                 break
                 M.append((h, r, t))
                 freq[t] = freq.get(t, 0) + 1
-        # 填P和MP 无重合
+
         for d in tqdm(range(len(data))):
             h = data[d][0]
-            t = data[d][1]  # o = t
+            t = data[d][1]
             r = data[d][2]
             if (h, r, t) in M:
                 self.MP[h][r] += 1
             else:
                 self.P[h][r] += 1
-        # log两个
+
         for i in tqdm(range(self.P.size(0))):
             for j in range(self.P.size(1)):
                 self.P[i][j] = torch.log(self.P[i][j] + 1)

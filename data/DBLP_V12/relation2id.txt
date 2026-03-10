@@ -1,0 +1,6 @@
+5
+author_of 0
+cites 1
+published_in 2
+has_keyword 3
+coworker 4

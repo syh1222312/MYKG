@@ -14,8 +14,8 @@
 		"k_size": [2500, 100],
 		"v_size": [2500, 100],
 		"a": 0.1,
-		"b": 0.2,
-		"memory_size": 10000,
+		"b": 0.05,
+		"memory_size": 1000,
 		"label_smoothing": 0.1,
 		"use_bias": true
 	},
