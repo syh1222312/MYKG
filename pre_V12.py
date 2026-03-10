@@ -14,9 +14,20 @@ random_seed = 42
 os.makedirs(output_dir, exist_ok=True)
 random.seed(random_seed)
 
-# gensim的STOPWORDS已经是frozenset，我们可以直接使用（in 操作兼容），或转为set
-STOPWORDS = set(STOPWORDS)  # 使用gensim的预置英文停用词，更全面和标准化
+from gensim.parsing.preprocessing import STOPWORDS
 
+STOPWORDS = set(STOPWORDS)               # convert once (frozenset → set)
+
+# Add domain-specific noise words (very common pattern)
+STOPWORDS.update({
+    'also', 'get', 'got', 'make', 'go', 'going', 'one', 'two', 'way',
+    'really', 'just', 'even', 'back', 'well', 'still', 'much', 'more'
+    'if'
+})
+
+# Optional: keep negation / modal words that change meaning
+for w in ['no', 'not', 'never', 'cannot', 'can', 'could', 'would', 'should']:
+    STOPWORDS.discard(w)
 def normalize_entity_name(name: str) -> str:
     name = name.strip()
     if not name:
