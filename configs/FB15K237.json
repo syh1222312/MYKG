@@ -5,7 +5,7 @@
 		"emb_dim": 100,
 		"reshape": [10, 10],
 		"conv_out_channels": 100,
-		"conv_kernel_size": [5, 5],
+		"conv_kernel_size": [6, 6],
 		"stride": 1,
 		"input_dropout": 0.3,
 		"feature_map_dropout": 0.2,

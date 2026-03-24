@@ -1,4 +1,3 @@
-import json
 import random
 import os
 from typing import Dict
@@ -6,8 +5,8 @@ import ijson  # 请先安装: pip install ijson (用于流式处理大JSON文件
 from gensim.parsing.preprocessing import STOPWORDS  # 引入gensim的英文停用词（约337个，更全面）
 
 # ====================== 配置区（请修改这里） ======================
-json_path = 'INITDATASET/dblp-v12-clean.json'  # ←←← 改成你的 JSON 文件路径
-output_dir = 'data/DBLP_V12'  # 输出目录
+json_path = '../INITDATASET/dblp-v12-clean.json'  # ←←← 改成你的 JSON 文件路径
+output_dir = '../data/DBLP_V12'  # 输出目录
 random_seed = 42
 # ===============================================================
 

@@ -65,8 +65,8 @@ def stream_json_array(file_path):
                 raise ValueError("Expected ',' or ']' after object")
 
 
-input_file = 'INITDATASET/dblp-v12.json'
-output_file = 'INITDATASET/dblp-v12-clean.json'
+input_file = '../INITDATASET/dblp-v12.json'
+output_file = '../INITDATASET/dblp-v12-clean.json'
 
 # First pass: collect all potential objects and count author articles
 author_count = {}

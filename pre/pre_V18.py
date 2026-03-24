@@ -4,8 +4,8 @@ import os
 from typing import Dict
 
 # ====================== 配置区（请修改这里） ======================
-jsonl_path = 'INITDATASET/DBLP-Citation-network-V18.jsonl'  # ←←← 改成你的 15GB JSONL 文件路径
-output_dir = 'data/DBLP_V18'  # 输出目录
+jsonl_path = '../INITDATASET/DBLP-Citation-network-V18.jsonl'  # ←←← 改成你的 15GB JSONL 文件路径
+output_dir = '../data/DBLP_V18'  # 输出目录
 random_seed = 42
 # ===============================================================
 
